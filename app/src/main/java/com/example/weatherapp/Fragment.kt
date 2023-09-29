@@ -1,6 +1,11 @@
 package com.example.weatherapp
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.location.LocationManager
+import android.media.audiofx.Equalizer.Settings
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -10,6 +15,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.app.ActivityCompat
+import androidx.core.content.getSystemService
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.Request
@@ -18,11 +25,17 @@ import com.android.volley.toolbox.Volley
 import com.example.weatherapp.adapters.WeatherAdapter
 import com.example.weatherapp.adapters.WeatherModel
 import com.example.weatherapp.databinding.FragmentBinding
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.CancellationToken
+import com.google.android.gms.tasks.CancellationTokenSource
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
 
 
 class Fragment : Fragment() {
+    private lateinit var fusedLocationProviderClient: FusedLocationProviderClient
     private lateinit var launcher: ActivityResultLauncher<String>
     private lateinit var binding: FragmentBinding
     private lateinit var adapter: WeatherAdapter
@@ -39,6 +52,7 @@ class Fragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         checkPermission()
+        fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireContext())
         binding.recyclerViewTemperatureDays.layoutManager = LinearLayoutManager(activity)
         adapter = WeatherAdapter()
         binding.recyclerViewTemperatureDays.adapter = adapter
@@ -48,7 +62,15 @@ class Fragment : Fragment() {
         //
 
         updateCurrentCard()
-        requestWeatherData("Moscow")
+        binding.buttonCityChange.setOnClickListener {
+            DialogManager.searchByCity(requireContext(), object : DialogManager.Listener{
+                override fun onClick(name: String?) {
+                    name?.let { it1 -> requestWeatherData(it1) }
+                }
+
+            })
+        }
+
 
 
 
@@ -59,6 +81,49 @@ class Fragment : Fragment() {
         adapter.submitList(list)
 
          */
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkLocation()
+    }
+
+    private fun isLocationEnabled(): Boolean{
+        val locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
+    }
+    private fun checkLocation(){
+        if (isLocationEnabled()){
+            getLocation()
+        }else{
+            DialogManager.locationDialog(requireContext(), object : DialogManager.Listener{
+                override fun onClick(name: String?) {
+                    startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                }
+
+            })
+        }
+    }
+    private fun getLocation(){
+        if (!isLocationEnabled()){
+            return
+        }
+        val cancellationToken = CancellationTokenSource()
+        if (ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+
+            return
+        }
+        fusedLocationProviderClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken.token ).
+        addOnCompleteListener{
+            requestWeatherData("${it.result.latitude},${it.result.longitude}")
+        }
     }
 
     private fun updateCurrentCard(){

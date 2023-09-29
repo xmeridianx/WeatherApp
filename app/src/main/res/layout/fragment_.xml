@@ -66,7 +66,6 @@
         <ImageView
             android:id="@+id/imageViewCondition"
             android:src="@drawable/main_image"
-            android:scaleType="fitXY"
             android:layout_width="80dp"
             android:layout_height="80dp"
             app:layout_constraintEnd_toEndOf="parent"
