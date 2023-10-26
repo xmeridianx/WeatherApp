@@ -1,11 +1,10 @@
-package com.example.weatherapp
+package com.example.weatherapp.view
 
 import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
-import android.media.audiofx.Equalizer.Settings
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
@@ -16,19 +15,20 @@ import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
-import androidx.core.content.getSystemService
 import androidx.fragment.app.activityViewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.android.volley.Request
 import com.android.volley.toolbox.StringRequest
 import com.android.volley.toolbox.Volley
+import com.example.weatherapp.DialogManager
+import com.example.weatherapp.viewmodel.MainViewModel
 import com.example.weatherapp.adapters.WeatherAdapter
 import com.example.weatherapp.adapters.WeatherModel
 import com.example.weatherapp.databinding.FragmentBinding
+import com.example.weatherapp.isPermissionGranted
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.squareup.picasso.Picasso
 import org.json.JSONObject
@@ -59,35 +59,19 @@ class Fragment : Fragment() {
         viewModel.liveDataList.observe(viewLifecycleOwner){
             adapter.submitList(it)
         }
-        //
-
         updateCurrentCard()
         binding.buttonCityChange.setOnClickListener {
-            DialogManager.searchByCity(requireContext(), object : DialogManager.Listener{
+            DialogManager.searchByCity(requireContext(), object : DialogManager.Listener {
                 override fun onClick(name: String?) {
                     name?.let { it1 -> requestWeatherData(it1) }
                 }
-
             })
         }
-
-
-
-
-        /*
-        val list = listOf(WeatherModel("kazan", "12:00", "11", "22", "33", "22"),
-            WeatherModel("kazan", "13:00", "11", "22", "33", "22"),
-            WeatherModel("kazan", "14:00", "11", "22", "33", "22"))
-        adapter.submitList(list)
-
-         */
     }
-
     override fun onResume() {
         super.onResume()
         checkLocation()
     }
-
     private fun isLocationEnabled(): Boolean{
         val locationManager = activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
@@ -96,11 +80,10 @@ class Fragment : Fragment() {
         if (isLocationEnabled()){
             getLocation()
         }else{
-            DialogManager.locationDialog(requireContext(), object : DialogManager.Listener{
+            DialogManager.locationDialog(requireContext(), object : DialogManager.Listener {
                 override fun onClick(name: String?) {
                     startActivity(Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS))
                 }
-
             })
         }
     }
@@ -117,7 +100,6 @@ class Fragment : Fragment() {
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
-
             return
         }
         fusedLocationProviderClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, cancellationToken.token ).
@@ -125,16 +107,13 @@ class Fragment : Fragment() {
             requestWeatherData("${it.result.latitude},${it.result.longitude}")
         }
     }
-
     private fun updateCurrentCard(){
         viewModel.liveData.observe(viewLifecycleOwner){
         binding.textViewCity.text = it.city
             binding.textViewTemperature.text = "${it.temperature} °C"
             Picasso.get().load("https:" + it.imageUrl).into(binding.imageViewCondition)
-
         }
     }
-
 
     private fun permissionListener(){
         launcher = registerForActivityResult(ActivityResultContracts.RequestPermission()){
@@ -208,7 +187,6 @@ class Fragment : Fragment() {
         )
         viewModel.liveData.value = item
         Log.d("MyLog", "city: ${item.city}")
-
     }
 
     companion object {

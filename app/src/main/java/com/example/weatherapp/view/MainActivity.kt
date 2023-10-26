@@ -1,13 +1,8 @@
-package com.example.weatherapp
+package com.example.weatherapp.view
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import com.android.volley.Request
-import com.android.volley.toolbox.StringRequest
-import com.android.volley.toolbox.Volley
-import com.example.weatherapp.databinding.ActivityMainBinding
-import org.json.JSONObject
+import com.example.weatherapp.R
 
 
 const val API_KEY = "cf6d9a1dfdbe4917842192231232409"
